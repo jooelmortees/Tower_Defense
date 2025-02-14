@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pantalla de Inicio</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        body {
+            display: flex;
+            height: 100vh;
+            background-image: url('img/DALL·E-2025-02-11-23.20.03-A-perfect_-high-quality-title-screen-for-a-fantasy-tower-defense-game (1).png');
+            background-size: cover;
+        }
+
+        button {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            color: black;
+            border-radius: 10em;
+            font-size: 17px;
+            font-weight: 600;
+            padding: 1em 2em;
+            cursor: pointer;
+            transition: all 0.3s ease-in-out;
+            border: 1px solid black;
+            box-shadow: 0 0 0 0 black;
+        }
+
+        button:hover {
+            transform: translate(-50%, -50%) translateY(-4px) translateX(-2px);
+            box-shadow: 2px 5px 0 0 black;
+        }
+
+        button:active {
+            transform: translate(-50%, -50%) translateY(2px) translateX(1px);
+            box-shadow: 0 0 0 0 black;
+        }
+        
+    </style>
+</head>
+<body>
+    <a href="html/juego.html">
+        <button>Jugar</button>
+      </a> 
+</body>
+</html>
