@@ -174,10 +174,24 @@
     background-color: #2980b9;
 }
 
+#backgroundMusic {
+    display: none;
+}
+
+#attackSound {
+    display: none;
+}
 
     </style>
 </head>
 <body>
+    <audio id="backgroundMusic" loop>
+        <source src="/Audio/Musica/Grave Buster - Tower Defense Simulator OST.mp3" type="audio/mpeg">
+    </audio>
+
+    <audio id="attackSound">
+        <source src="/Audio/Flecha/Ataque.mp3" type="audio/mpeg">
+    </audio>
 
         <div id="gameBoard">
             <!-- Botón de Pausa -->
@@ -211,8 +225,10 @@ const gameState = {
     projectiles: [],   
     selectedTowerType: null,  
     waveInProgress: false, 
-    isPaused: false  
+    isPaused: false,
+    music: document.getElementById('backgroundMusic')
 };
+
 
 // ==================== SISTEMA DE CAMINO ====================
 const pathSegments = [
@@ -532,13 +548,21 @@ function updateTowers() {
 // ==================== SISTEMA DE PROYECTILES ====================
 
 function createProjectile(tower, enemy) {
+    // Reproducir sonido de ataque
+    const attackSound = document.getElementById('attackSound');
+    attackSound.currentTime = 0;
+    attackSound.volume = 1;
+    attackSound.play().catch(error => console.log("Error al reproducir sonido"));
+
+    // Resto del código original
     const projectile = {
-        x: tower.x + 19,  // Ajusta la posición inicial del proyectil
+        x: tower.x + 19,
         y: tower.y + 9,
         targetEnemy: enemy,
         tower: tower,
         element: document.createElement('div')
     };
+
 
     projectile.element.className = 'projectile';
     projectile.element.style.left = projectile.x + 'px';
@@ -780,13 +804,11 @@ function togglePause() {
     gameState.isPaused = !gameState.isPaused;
     document.getElementById('pauseBtn').textContent = gameState.isPaused ? 'Reanudar' : 'Pausa';
     
-    // Pausar/Reanudar la generación de enemigos
-    if (gameState.isPaused) {
-        clearInterval(spawnInterval);
+    // Controlar la música
+    if(gameState.isPaused) {
+        gameState.music.pause();
     } else {
-        if (gameState.waveInProgress && enemiesSpawned < totalEnemies) {
-            startWave(); // Reanudar la generación donde quedó
-        }
+        gameState.music.play();
     }
 }
 
@@ -802,7 +824,13 @@ function initGame() {
     createTowerSlots();
     setupEventListeners();
     updateStats();
+    gameState.music.volume = 0.05;
+    gameState.music.play().catch(error => {
+        // Manejar error de autoplay
+        document.addEventListener('click', () => gameState.music.play(), { once: true });
+    });
 }
+
 
 function gameLoop() {
     if (!gameState.isPaused) {
