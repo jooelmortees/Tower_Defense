@@ -151,11 +151,39 @@
     z-index: 999; /* Para que las flechas estén siempre encima */
 }
 
+/* Botón de Pausa */
+#pauseButtonContainer {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    z-index: 10;
+}
+
+#pauseBtn {
+    padding: 10px 20px;
+    background-color: #3498db;
+    border: none;
+    border-radius: 5px;
+    color: white;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s;
+}
+
+#pauseBtn:hover {
+    background-color: #2980b9;
+}
+
+
     </style>
 </head>
 <body>
 
         <div id="gameBoard">
+            <!-- Botón de Pausa -->
+<div id="pauseButtonContainer">
+    <button id="pauseBtn">Pausa</button>
+</div>
             <!-- Stats Panel -->
             <div id="stats">
                 <div>Oro: <span id="gold">300</span></div>
@@ -182,7 +210,8 @@ const gameState = {
     towers: [],        
     projectiles: [],   
     selectedTowerType: null,  
-    waveInProgress: false     
+    waveInProgress: false, 
+    isPaused: false  
 };
 
 // ==================== SISTEMA DE CAMINO ====================
@@ -579,8 +608,11 @@ function updateProjectiles() {
 }
 
 // ==================== SISTEMA DE OLEADAS ====================
+
+let spawnInterval; // Variable global para controlar el intervalo
+
 function startWave() {
-    if (!gameState.waveInProgress) {
+    if (!gameState.waveInProgress && !gameState.isPaused) {
         gameState.waveInProgress = true;
         let enemiesSpawned = 0;
 
@@ -589,15 +621,16 @@ function startWave() {
         const totalEnemies = Math.floor(baseEnemies * enemiesMultiplier);
         const spawnRate = Math.max(2000 - (gameState.wave - 1) * 600, 600);
 
-        const spawnInterval = setInterval(() => {
-            createEnemy();
-            enemiesSpawned++;
+        spawnInterval = setInterval(() => {
+            if (!gameState.isPaused) { // Solo crear enemigos si no está pausado
+                createEnemy();
+                enemiesSpawned++;
+            }
 
             if (enemiesSpawned >= totalEnemies) {
                 clearInterval(spawnInterval);
-                // Eliminar el setTimeout y mover la lógica a checkNextWave
                 const waveCheck = setInterval(() => {
-                    if (gameState.enemies.length === 0) {
+                    if (gameState.enemies.length === 0 && !gameState.isPaused) {
                         clearInterval(waveCheck);
                         gameState.waveInProgress = false;
                         gameState.wave++;
@@ -609,10 +642,10 @@ function startWave() {
                                 location.reload();
                             }, 2000);
                         } else {
-                            startWave(); // Iniciar nueva oleada automáticamente
+                            startWave();
                         }
                     }
-                }, 100); // Verificar cada 100ms
+                }, 100);
             }
         }, spawnRate);
     }
@@ -686,7 +719,7 @@ function isValidTowerPosition(x, y) {
 function createTowerSlots() {
     const gameBoard = document.getElementById('gameBoard');
     for(let y = 0; y < 11; y++) {
-        for(let x = 0; x < 19; x++) {
+        for(let x = 0; x < 25; x++) {
             if(isValidTowerPosition(x * 40, y * 40)) {
                 const slot = document.createElement('div');
                 slot.className = 'tower-slot';
@@ -714,6 +747,7 @@ function handleSlotClick(slot, x, y) {
 
 // ==================== SISTEMA DE UI Y ESTADÍSTICAS ====================
 function setupEventListeners() {
+    document.getElementById('pauseBtn').addEventListener('click', togglePause);
     document.querySelectorAll('.tower-button').forEach(button => {
         button.addEventListener('click', () => {
             gameState.selectedTowerType = button.dataset.type;
@@ -741,7 +775,28 @@ function debugTower(tower) {
     });
 }
 
+// ==================== SISTEMA DE PAUSA ====================
+function togglePause() {
+    gameState.isPaused = !gameState.isPaused;
+    document.getElementById('pauseBtn').textContent = gameState.isPaused ? 'Reanudar' : 'Pausa';
+    
+    // Pausar/Reanudar la generación de enemigos
+    if (gameState.isPaused) {
+        clearInterval(spawnInterval);
+    } else {
+        if (gameState.waveInProgress && enemiesSpawned < totalEnemies) {
+            startWave(); // Reanudar la generación donde quedó
+        }
+    }
+}
+
+function togglePause() {
+    gameState.isPaused = !gameState.isPaused;
+    document.getElementById('pauseBtn').textContent = gameState.isPaused ? 'Reanudar' : 'Pausa';
+}
+
 // ==================== INICIALIZACIÓN Y LOOP PRINCIPAL ====================
+
 function initGame() {
     createPath();
     createTowerSlots();
@@ -750,9 +805,11 @@ function initGame() {
 }
 
 function gameLoop() {
-    updateEnemies();
-    updateTowers();
-    updateProjectiles();
+    if (!gameState.isPaused) {
+        updateEnemies();
+        updateTowers();
+        updateProjectiles();
+    }
     requestAnimationFrame(gameLoop);
 }
 // Iniciar el juego
